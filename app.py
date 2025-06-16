@@ -7,6 +7,7 @@ import google.generativeai as genai
 from dotenv import load_dotenv
 from flask_cors import CORS
 import time # Untuk timestamp epoch
+from flask import render_template
 
 load_dotenv()
 
@@ -32,6 +33,10 @@ except Exception as e:
     sensor_table = None
     alerts_table = None
 
+
+@app.route('/')
+def home():
+    return render_template('hello.html')
 
 # --- Konfigurasi Gemini AI ---
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
