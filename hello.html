@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EcoBand Sensor Monitoring</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-light: #e0e5ec;
+            --bg-dark: #1a1a2e;
+            --surface-light: #ffffff;
+            --surface-dark: #24243e;
+            --text-light-primary: #333;
+            --text-light-secondary: #555;
+            --text-dark-primary: #e0e0e0;
+            --text-dark-secondary: #b0b0b0;
+            --accent-color: #007bff;
+            --accent-color-darker: #0056b3;
+            --status-ok: #28a745;
+            --status-warning: #ffc107;
+            --status-danger: #dc3545;
+            --shadow-light-strong: 6px 6px 12px #c1c9d2, -6px -6px 12px #ffffff;
+            --shadow-light-inset: inset 3px 3px 6px #c1c9d2, inset -3px -3px 6px #ffffff;
+            --shadow-dark-strong: 6px 6px 12px #131322, -6px -6px 12px #21213a;
+            --shadow-dark-inset: inset 3px 3px 6px #131322, inset -3px -3px 6px #21213a;
+            --border-radius-main: 15px;
+            --transition-main: all 0.3s ease-in-out;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-light);
+            color: var(--text-light-primary);
+            transition: var(--transition-main);
+            overflow-x: hidden;
+        }
+
+        body.dark-mode {
+            background-color: var(--bg-dark);
+            color: var(--text-dark-primary);
+        }
+
+        .premium-card {
+            background-color: var(--surface-light);
+            border-radius: var(--border-radius-main);
+            box-shadow: var(--shadow-light-strong);
+            padding: 25px;
+            margin-bottom: 25px;
+            transition: var(--transition-main);
+            position: relative;
+            overflow: hidden;
+        }
+        body.dark-mode .premium-card {
+            background-color: var(--surface-dark);
+            box-shadow: var(--shadow-dark-strong);
+        }
+        .premium-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 12px 24px rgba(0,0,0,0.2);
+        }
+        body.dark-mode .premium-card:hover {
+            box-shadow: 0 12px 24px rgba(0,0,0,0.3);
+        }
+
+        .premium-card::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 50%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+            transition: left 0.6s ease;
+            z-index: 1;
+        }
+        body.dark-mode .premium-card::before {
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent);
+        }
+        .premium-card:hover::before {
+            left: 150%;
+        }
+
+        .status-icon-premium {
+            font-size: 2.5rem;
+            margin-right: 15px;
+            transition: var(--transition-main);
+        }
+        .status-ok { color: var(--status-ok); }
+        .status-warning { color: var(--status-warning); }
+        .status-danger { color: var(--status-danger); }
+        body.dark-mode .status-ok { color: #3ddc84; }
+        body.dark-mode .status-warning { color: #ffd34f; }
+        body.dark-mode .status-danger { color: #ff6b79; }
+
+
+        @keyframes backgroundPan {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .premium-header {
+            background: linear-gradient(120deg, #007bff, #00c6ff, #007bff);
+            background-size: 200% 200%;
+            animation: backgroundPan 15s ease infinite;
+            color: white;
+            padding: 30px 20px;
+            box-shadow: 0 8px 16px rgba(0,123,255,0.3);
+            border-bottom-left-radius: 20px;
+            border-bottom-right-radius: 20px;
+        }
+        .premium-header h1 {
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+        }
+
+        .premium-section-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent-color);
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 3px solid var(--accent-color);
+            display: inline-block;
+        }
+        body.dark-mode .premium-section-title {
+            color: #34a4ff;
+            border-bottom-color: #34a4ff;
+        }
+
+        .premium-detail-label {
+            font-weight: 600;
+            color: var(--text-light-secondary);
+        }
+        body.dark-mode .premium-detail-label {
+            color: var(--text-dark-secondary);
+        }
+
+        .premium-interpretation-text {
+            margin-top: 10px;
+            padding: 12px 15px;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            border-left: 5px solid;
+            transition: var(--transition-main);
+        }
+        .premium-interpretation-ok { background-color: #e6ffed; color: #006400; border-left-color: var(--status-ok); }
+        .premium-interpretation-info { background-color: #e7f3fe; color: #004085; border-left-color: var(--accent-color); }
+        .premium-interpretation-warning { background-color: #fff8e1; color: #856404; border-left-color: var(--status-warning); }
+        .premium-interpretation-danger { background-color: #fdecea; color: #721c24; border-left-color: var(--status-danger); }
+
+        body.dark-mode .premium-interpretation-ok { background-color: #1c3a24; color: #a3d9b1; border-left-color: #3ddc84; }
+        body.dark-mode .premium-interpretation-info { background-color: #1a2c42; color: #a8caff; border-left-color: #34a4ff; }
+        body.dark-mode .premium-interpretation-warning { background-color: #42381a; color: #ffd34f; border-left-color: #ffd34f; }
+        body.dark-mode .premium-interpretation-danger { background-color: #421a20; color: #ff9faa; border-left-color: #ff6b79; }
+
+        .theme-switch-wrapper {
+            display: flex;
+            align-items: center;
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+        .theme-switch {
+            display: inline-block;
+            height: 34px;
+            position: relative;
+            width: 60px;
+        }
+        .theme-switch input { display:none; }
+        .slider {
+            background-color: #ccc;
+            bottom: 0; cursor: pointer; left: 0; position: absolute; right: 0; top: 0;
+            transition: .4s; border-radius: 34px;
+        }
+        .slider:before {
+            background-color: #fff; bottom: 4px; content: ""; height: 26px; left: 4px;
+            position: absolute; transition: .4s; width: 26px; border-radius: 50%;
+        }
+        input:checked + .slider { background-color: var(--accent-color); }
+        input:checked + .slider:before { transform: translateX(26px); }
+        .theme-switch-wrapper i {
+            margin: 0 8px; font-size: 1.2rem; color: var(--text-light-secondary);
+        }
+        body.dark-mode .theme-switch-wrapper i { color: var(--text-dark-secondary); }
+        input:checked + .slider + i.fa-moon { display: none; }
+        input:not(:checked) + .slider + i.fa-sun { display: none; }
+
+        .gauge-container {
+            width: 120px; height: 60px; position: relative;
+            overflow: hidden; margin: 0 auto 10px auto;
+        }
+        .gauge-background, .gauge-fill {
+            width: 100%; height: 200%; border-radius: 50%;
+            position: absolute; top: 0; left: 0;
+        }
+        .gauge-background { background-color: #e0e0e0; }
+        body.dark-mode .gauge-background { background-color: #3a3a5a; }
+        .gauge-fill {
+            background-color: var(--accent-color);
+            transform-origin: center bottom;
+            transition: transform 0.5s ease-out, background-color 0.3s ease-out;
+            transform: rotate(0deg);
+        }
+        .gauge-cover {
+            width: 100%; height: 100%; background-color: var(--surface-light);
+            position: absolute; top: 50%; left: 0;
+        }
+        body.dark-mode .gauge-cover { background-color: var(--surface-dark); }
+        .gauge-value {
+            position: absolute; bottom: -5px; left: 50%;
+            transform: translateX(-50%); font-size: 1rem; font-weight: 600;
+        }
+
+        .modal {
+            display: none; position: fixed; z-index: 1001; left: 0; top: 0;
+            width: 100%; height: 100%; overflow: auto;
+            background-color: rgba(0,0,0,0.6); backdrop-filter: blur(5px);
+        }
+        .modal-content {
+            background-color: var(--surface-light); margin: 15% auto; padding: 30px;
+            border: none; border-radius: var(--border-radius-main);
+            width: 80%; max-width: 500px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            text-align: center; position: relative; animation: modalOpen 0.5s ease-out;
+        }
+        body.dark-mode .modal-content {
+            background-color: var(--surface-dark); box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+        }
+        @keyframes modalOpen {
+            from { opacity: 0; transform: translateY(-50px) scale(0.9); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .close-button {
+            color: #aaa; position: absolute; top: 15px; right: 20px;
+            font-size: 28px; font-weight: bold; transition: color 0.2s;
+        }
+        .close-button:hover, .close-button:focus {
+            color: var(--text-light-primary); text-decoration: none; cursor: pointer;
+        }
+        body.dark-mode .close-button:hover, body.dark-mode .close-button:focus {
+            color: var(--text-dark-primary);
+        }
+        .modal-icon { font-size: 3.5rem; margin-bottom: 20px; }
+
+        .value-change-up { animation: valueUp 0.5s ease-out; }
+        .value-change-down { animation: valueDown 0.5s ease-out; }
+        @keyframes valueUp {
+            0% { opacity: 0.5; transform: translateY(5px); color: inherit; }
+            50% { transform: translateY(-5px); color: var(--status-ok); }
+            100% { opacity: 1; transform: translateY(0); color: inherit; }
+        }
+        @keyframes valueDown {
+            0% { opacity: 0.5; transform: translateY(-5px); color: inherit; }
+            50% { transform: translateY(5px); color: var(--status-danger); }
+            100% { opacity: 1; transform: translateY(0); color: inherit; }
+        }
+        .data-pulse { animation: dataPulse 0.7s ease-out; }
+        @keyframes dataPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
+        }
+        .animate-ping {
+            animation: ping 1s cubic-bezier(0, 0, 0.2, 1) infinite;
+        }
+        @keyframes ping {
+            75%, 100% {
+                transform: scale(2);
+                opacity: 0;
+            }
+        }
+
+        .gemini-button {
+            background-color: var(--accent-color);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: background-color 0.3s, transform 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            border: none;
+            cursor: pointer;
+        }
+        .gemini-button:hover {
+            background-color: var(--accent-color-darker);
+            transform: translateY(-2px);
+        }
+        .gemini-button:active {
+            transform: translateY(0px);
+        }
+        body.dark-mode .gemini-button {
+            background-color: #34a4ff;
+        }
+        body.dark-mode .gemini-button:hover {
+            background-color: #007bff;
+        }
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .gemini-response-area {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            background-color: rgba(0,0,0,0.03);
+            min-height: 50px;
+            white-space: pre-wrap;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+        body.dark-mode .gemini-response-area {
+            background-color: rgba(255,255,255,0.05);
+        }
+
+
+        @media (max-width: 768px) {
+            .premium-header h1 { font-size: 2rem; }
+            .premium-section-title { font-size: 1.5rem; }
+            .gauge-container { width: 100px; height: 50px; }
+            .gauge-value { font-size: 0.9rem; }
+            .modal-content { margin: 25% auto; width: 90%; }
+        }
+        @media (max-width: 640px) {
+            .theme-switch-wrapper { top: 10px; right: 10px; }
+            .premium-header { padding: 20px 15px; }
+            .premium-header div:first-child {
+                flex-direction: column; align-items: flex-start;
+            }
+            #lastUpdated { margin-top: 5px; }
+        }
+    </style>
+</head>
+<body class="text-gray-800">
+
+    <div class="theme-switch-wrapper">
+        <i class="fas fa-sun"></i>
+        <label class="theme-switch" for="themeCheckbox">
+            <input type="checkbox" id="themeCheckbox" />
+            <div class="slider"></div>
+        </label>
+        <i class="fas fa-moon"></i>
+    </div>
+
+    <header class="premium-header sticky top-0 z-50">
+        <div class="container mx-auto">
+            <div class="flex flex-col sm:flex-row justify-between items-center mb-6">
+                <h1 class="text-3xl md:text-4xl font-extrabold mb-2 sm:mb-0">
+                    EcoBand Sensor Monitor <i class="fas fa-leaf ml-2 opacity-80"></i>
+                </h1>
+                <div id="lastUpdated" class="text-sm opacity-90 mt-2 sm:mt-0 text-right w-full sm:w-auto">
+                    Memuat data...
+                </div>
+            </div>
+            <div id="overallStatusCard" class="premium-card bg-white/20 backdrop-blur-md p-6 rounded-xl flex items-center shadow-xl">
+                <i id="overallStatusIcon" class="fas fa-spinner fa-spin status-icon-premium"></i>
+                <div>
+                    <h2 class="text-xl md:text-2xl font-semibold">Status Lingkungan Global:</h2>
+                    <p id="overallStatusText" class="text-lg md:text-xl">Menganalisis data...</p>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container mx-auto p-4 md:p-6 mt-8">
+        <section id="mainMetrics" class="mb-10">
+            <h2 class="premium-section-title">Dasbor Sensor Utama <i class="fas fa-tachometer-alt-fast ml-2"></i></h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
+                <div class="premium-card sm:col-span-2"> <div class="flex items-center justify-center mb-4">
+                    <i class="fas fa-thermometer-half fa-2x text-blue-500 mr-3"></i>
+                    <h3 class="text-xl font-semibold">Suhu & Kelembapan</h3>
+                </div>
+
+                <div class="flex justify-around items-start">
+                    
+                    <div class="text-center w-1/2">
+                        <h4 class="font-medium text-gray-600 dark:text-gray-400">Suhu</h4>
+                        <div class="gauge-container">
+                            <div class="gauge-background"></div>
+                            <div id="tempGaugeFill" class="gauge-fill"></div>
+                            <div class="gauge-cover"></div>
+                            <div id="tempGaugeValue" class="gauge-value">--°C</div>
+                        </div>
+                    </div>
+
+                    <div class="text-center w-1/2">
+                        <h4 class="font-medium text-gray-600 dark:text-gray-400">Kelembapan</h4>
+                        <div class="gauge-container">
+                            <div class="gauge-background"></div>
+                            <div id="humidityGaugeFill" class="gauge-fill"></div>
+                            <div class="gauge-cover"></div>
+                            <div id="humidityGaugeValue" class="gauge-value">--%</div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <p id="combinedTempHumidityInterpretation" class="text-sm text-center mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">--</p>
+            </div>
+                <div class="premium-card text-center">
+                    <div class="flex items-center justify-center mb-3">
+                        <i class="fas fa-smog fa-2x text-green-500 mr-3"></i>
+                        <h3 class="text-xl font-semibold">Kualitas Udara</h3>
+                    </div>
+                    <div class="gauge-container">
+                        <div class="gauge-background"></div>
+                        <div id="airQualityGaugeFill" class="gauge-fill"></div>
+                        <div class="gauge-cover"></div>
+                        <div id="airQualityGaugeValue" class="gauge-value">--</div>
+                    </div>
+                    <p id="airQualityInterpretation" class="text-sm mt-1">--</p>
+                </div>
+                <div class="premium-card text-center">
+                    <div class="flex items-center justify-center mb-3">
+                        <i class="far fa-lightbulb fa-2x text-yellow-400 mr-3"></i>
+                        <h3 class="text-xl font-semibold">Cahaya</h3>
+                    </div>
+                    <div class="gauge-container">
+                        <div class="gauge-background"></div>
+                        <div id="luxGaugeFill" class="gauge-fill"></div>
+                        <div class="gauge-cover"></div>
+                        <div id="luxGaugeValue" class="gauge-value">-- lx</div>
+                    </div>
+                    <p id="luxInterpretation" class="text-sm mt-1">--</p>
+                </div>
+                <div class="premium-card text-center">
+                    <div class="flex items-center justify-center mb-3">
+                        <i class="fas fa-running fa-2x text-indigo-500 mr-3"></i>
+                        <h3 class="text-xl font-semibold">Gerakan</h3>
+                    </div>
+                    <i id="motionIcon" class="fas fa-shield-alt fa-3x my-2"></i>
+                    <p id="motionValue" class="text-2xl font-bold mt-1">--</p>
+                    <p id="motionInterpretation" class="text-sm mt-1">--</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="sensorDetails" class="mb-10">
+            <h2 class="premium-section-title">Analisis Sensor Rinci <i class="fas fa-chart-line ml-2"></i></h2>
+            <div class="premium-card">
+                <h3 class="text-2xl font-semibold mb-4 text-blue-600"><i class="fas fa-mountain-sun mr-2"></i>Data Lingkungan Detil</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div>
+                        <h4 class="text-lg font-semibold mb-2">Suhu & Kelembapan (DHT22)</h4>
+                        <p><span class="premium-detail-label">Suhu Aktual:</span> <span id="detailTempValue" class="font-bold text-lg">--</span> °C</p>
+                        <p><span class="premium-detail-label">Kelembapan Aktual:</span> <span id="detailHumidityValue" class="font-bold text-lg">--</span> %</p>
+                        <p id="detailTempHumidityInterpretation" class="premium-interpretation-text">--</p>
+                    </div>
+                    <div>
+                        <h4 class="text-lg font-semibold mb-2">Kualitas Udara (MQ-135)</h4>
+                        <p><span class="premium-detail-label">Nilai Sensor ADC:</span> <span id="detailAirQualityValue" class="font-bold text-lg">--</span></p>
+                        <p id="detailAirQualityInterpretation" class="premium-interpretation-text">--</p>
+                    </div>
+                    <div>
+                        <h4 class="text-lg font-semibold mb-2">Intensitas Cahaya (BH1750)</h4>
+                        <p><span class="premium-detail-label">Tingkat Lux:</span> <span id="detailLuxValue" class="font-bold text-lg">--</span> lux</p>
+                        <p id="detailLuxInterpretation" class="premium-interpretation-text">--</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="premium-card">
+                <h3 class="text-2xl font-semibold mb-4 text-indigo-600"><i class="fas fa-satellite-dish mr-2"></i>Data Gerakan & Orientasi (MPU6050)</h3>
+                <p id="detailMotionInterpretation" class="premium-interpretation-text mt-4">--</p>
+            </div>
+
+            <div class="premium-card">
+                <h3 class="text-2xl font-semibold mb-2 text-teal-500"><i class="fas fa-brain-circuit mr-2"></i>Kesimpulan & Rekomendasi Sistem</h3>
+                <div id="combinedAnalysisText" class="text-lg p-4 rounded-lg leading-relaxed bg-gray-100 dark:bg-gray-700/30">--</div>
+                
+                <button id="getGeminiRecommendation" class="gemini-button mt-4">
+                    <span id="geminiButtonIcon"><i class="fas fa-wand-magic-sparkles"></i></span>
+                    <span id="geminiButtonText">✨ Dapatkan Rekomendasi Cerdas</span>
+                </button>
+                <div id="geminiResponseArea" class="gemini-response-area mt-3" style="display: none;"></div>
+            </div>
+        </section>
+
+        <footer class="text-center text-sm mt-16 pb-8">
+            <p class="opacity-70">&copy; <span id="currentYear"></span> EcoBand Advanced Monitoring. All rights reserved.</p>
+            <p class="opacity-50">ID Perangkat: <span id="deviceId">ECOBAND_PRM_777</span> | Status Jaringan: <span class="text-green-500 font-semibold">Terhubung</span></p>
+        </footer>
+    </div>
+
+    <div id="alertModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" onclick="closeModal()">&times;</span>
+            <i id="modalIcon" class="fas fa-exclamation-triangle modal-icon status-danger"></i>
+            <h2 id="modalTitle" class="text-2xl font-bold mb-3">Peringatan Sistem!</h2>
+            <p id="modalMessage" class="text-lg">Detail peringatan akan muncul di sini.</p>
+        </div>
+    </div>
+
+    <script>
+    // --- Dark Mode Toggle ---
+    const themeCheckbox = document.getElementById('themeCheckbox');
+    const body = document.body;
+
+    if (localStorage.getItem('theme') === 'dark') {
+        body.classList.add('dark-mode');
+        themeCheckbox.checked = true;
+    }
+
+    themeCheckbox.addEventListener('change', () => {
+        body.classList.toggle('dark-mode');
+        localStorage.setItem('theme', body.classList.contains('dark-mode') ? 'dark' : 'light');
+    });
+
+    // --- Variabel Global & Konfigurasi ---
+    const API_BASE_URL = 'http://127.0.0.1:5000/api'; // Pastikan ini sudah benar
+    let previousValues = {};
+    let currentSensorData = {}; // Menyimpan data sensor terbaru
+
+    // --- Fungsi Pembantu UI ---
+    function formatInterpretation(textElement, text, type) {
+        if (!textElement) return;
+        textElement.textContent = text;
+        textElement.className = 'premium-interpretation-text';
+        switch (type) {
+            case 'ok': textElement.classList.add('premium-interpretation-ok'); break;
+            case 'info': textElement.classList.add('premium-interpretation-info'); break;
+            case 'warning': textElement.classList.add('premium-interpretation-warning'); break;
+            case 'danger': textElement.classList.add('premium-interpretation-danger'); break;
+            default: textElement.classList.add('premium-interpretation-info');
+        }
+    }
+
+    function updateGauge(fillElement, valueElement, value, min, max, unit = '', rawValueForDisplay = null) {
+        if (!fillElement || !valueElement) return;
+        const displayVal = rawValueForDisplay !== null ? rawValueForDisplay : (value !== null && !isNaN(value) ? value.toFixed(unit === '°C' || unit === '%' ? 1 : 0) : '--');
+        valueElement.textContent = `${displayVal}${unit}`;
+        
+        let percentage = 0;
+        if (value !== null && !isNaN(value)) {
+            percentage = Math.max(0, Math.min(100, ((value - min) / (max - min)) * 100));
+        }
+        const rotation = (percentage / 100) * 180;
+        fillElement.style.transform = `rotate(${rotation}deg)`;
+
+        let gaugeColor = 'var(--accent-color)';
+        if (unit === '°C') {
+            if (value > 30 || value < 10) gaugeColor = 'var(--status-danger)';
+            else if (value > 25 || value < 20) gaugeColor = 'var(--status-warning)';
+            else gaugeColor = 'var(--status-ok)';
+        } else if (unit === '%') {
+            if (value > 75 || value < 30) gaugeColor = 'var(--status-danger)';
+            else if (value > 60 || value < 40) gaugeColor = 'var(--status-warning)';
+            else gaugeColor = 'var(--status-ok)';
+        } else if (unit === 'lx') {
+            if (value < 50 || value > 1500) gaugeColor = 'var(--status-danger)';
+            else if (value < 200 || value > 1000) gaugeColor = 'var(--status-warning)';
+            else gaugeColor = 'var(--status-ok)';
+        } else { // Untuk MQ135
+            if (value > 2000) gaugeColor = 'var(--status-danger)';
+            else if (value > 1000) gaugeColor = 'var(--status-warning)';
+            else gaugeColor = 'var(--status-ok)';
+        }
+        fillElement.style.backgroundColor = gaugeColor;
+    }
+    
+    function animateValueChange(element, newValue, oldValue) {
+        if (element && typeof oldValue !== 'undefined' && newValue !== null && !isNaN(newValue) && newValue !== oldValue) {
+            element.classList.remove('value-change-up', 'value-change-down');
+            void element.offsetWidth;
+            if (newValue > oldValue) {
+                element.classList.add('value-change-up');
+            } else if (newValue < oldValue) {
+                element.classList.add('value-change-down');
+            }
+        }
+    }
+
+    // --- Fungsi Utama Fetch Data & Update UI ---
+    async function fetchLatestData() {
+        try {
+            const response = await fetch(`${API_BASE_URL}/latest-data`);
+            if (!response.ok) {
+                console.error("Gagal mengambil data terkini:", response.status, await response.text());
+                document.getElementById('lastUpdated').textContent = `ERROR: Server ${response.status}`;
+                document.getElementById('overallStatusText').textContent = "Server error atau tidak ada data.";
+                document.getElementById('overallStatusIcon').className = "fas fa-times-circle status-icon-premium status-danger";
+                return;
+            }
+            const data = await response.json();
+            
+            // PENYESUAIAN: Check jika backend mengembalikan pesan "No data available"
+            if (data.message && data.message.includes("No data available")) {
+                document.getElementById('lastUpdated').textContent = `Data terakhir diperbarui: Belum ada data.`;
+                document.getElementById('overallStatusText').textContent = "Menunggu data pertama dari EcoBand...";
+                document.getElementById('overallStatusIcon').className = "fas fa-clock status-icon-premium status-info";
+                return;
+            }
+
+            updateUI(data);
+
+        } catch (error) {
+            console.error("Error fetching latest data:", error);
+            document.getElementById('lastUpdated').textContent = `ERROR: Kesalahan koneksi.`;
+            document.getElementById('overallStatusText').textContent = "Tidak dapat terhubung ke server.";
+            document.getElementById('overallStatusIcon').className = "fas fa-unlink status-icon-premium status-danger";
+        }
+    }
+
+    function updateUI(data) {
+        currentSensorData = data; // Simpan data lengkap yang baru diterima
+
+        // PENYESUAIAN: Menggunakan 'timestamp' dari JSON baru, yang mungkin berupa epoch.
+        // Jika timestamp berupa epoch (angka besar), ubah ke format tanggal. Jika sudah string, tampilkan saja.
+        let displayTimestamp = data.timestamp;
+        if (typeof data.timestamp === 'number' && data.timestamp > 1000000) { // Cek apakah ini epoch dalam detik/milidetik
+             displayTimestamp = new Date(data.timestamp * 1000).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short'});
+        }
+        document.getElementById('lastUpdated').textContent = `Data terakhir diperbarui: ${displayTimestamp}`;
+        document.getElementById('currentYear').textContent = new Date().getFullYear();
+        document.getElementById('deviceId').textContent = data.deviceId || 'N/A';
+        
+        const overallStatusCard = document.getElementById('overallStatusCard');
+        if (overallStatusCard) {
+            overallStatusCard.classList.add('data-pulse');
+            setTimeout(() => overallStatusCard.classList.remove('data-pulse'), 700);
+        }
+
+        // --- PENYESUAIAN UTAMA: Menggunakan nama atribut dari JSON baru ---
+        const { 
+            temperatureC, humidityRH, airQualityRaw, lightLux, totalAccel,
+            statusDHT, statusMQ, statusLux, statusAccel, statusKesimpulan, statusKondisiBahaya 
+        } = data;
+
+        // Animasikan perubahan nilai
+        animateValueChange(document.getElementById('tempGaugeValue'), temperatureC, previousValues.temperatureC);
+        animateValueChange(document.getElementById('humidityGaugeValue'), humidityRH, previousValues.humidityRH);
+        animateValueChange(document.getElementById('airQualityGaugeValue'), airQualityRaw, previousValues.airQualityRaw);
+        animateValueChange(document.getElementById('luxGaugeValue'), lightLux, previousValues.lightLux);
+        animateValueChange(document.getElementById('motionValue'), totalAccel, previousValues.totalAccel);
+
+        // Update Gauge Visuals
+        updateGauge(document.getElementById('tempGaugeFill'), document.getElementById('tempGaugeValue'), temperatureC, 0, 50, '°C');
+        updateGauge(document.getElementById('humidityGaugeFill'), document.getElementById('humidityGaugeValue'), humidityRH, 0, 100, '%');
+        updateGauge(document.getElementById('airQualityGaugeFill'), document.getElementById('airQualityGaugeValue'), airQualityRaw, 0, 3000, '', airQualityRaw);
+        updateGauge(document.getElementById('luxGaugeFill'), document.getElementById('luxGaugeValue'), lightLux, 0, 2000, 'lx');
+
+        // --- PENYESUAIAN: Menampilkan interpretasi dari JSON baru ---
+        // Kita langsung tampilkan saja karena sudah berupa kalimat lengkap.
+        document.getElementById('detailTempValue').textContent = (temperatureC !== null && !isNaN(temperatureC)) ? temperatureC.toFixed(1) : 'N/A';
+        document.getElementById('detailHumidityValue').textContent = (humidityRH !== null && !isNaN(humidityRH)) ? humidityRH.toFixed(1) : 'N/A';
+        formatInterpretation(document.getElementById('detailTempHumidityInterpretation'), statusDHT, statusDHT.includes("⚠️") ? "warning" : "ok");
+        document.getElementById('combinedTempHumidityInterpretation').textContent = statusDHT;
+
+        document.getElementById('airQualityInterpretation').textContent = statusMQ.split('—')[0].trim();
+        document.getElementById('detailAirQualityValue').textContent = airQualityRaw || 'N/A';
+        formatInterpretation(document.getElementById('detailAirQualityInterpretation'), statusMQ, statusMQ.includes("⚠️") ? "warning" : "ok");
+
+        document.getElementById('luxInterpretation').textContent = statusLux.split('—')[0].trim();
+        document.getElementById('detailLuxValue').textContent = (lightLux !== null && !isNaN(lightLux)) ? lightLux.toFixed(1) : 'N/A';
+        formatInterpretation(document.getElementById('detailLuxInterpretation'), statusLux, statusLux.includes("⚠️") ? "warning" : (statusLux.includes("✅") ? "ok" : "info"));
+
+        // Data MPU6050: JSON baru tidak menyertakan data X,Y,Z. Kita tampilkan N/A.
+        
+        const motionIconEl = document.getElementById('motionIcon');
+        document.getElementById('motionValue').textContent = statusAccel.split('—')[0].trim();
+        document.getElementById('motionInterpretation').textContent = statusAccel.split('—')[0].trim();
+        formatInterpretation(document.getElementById('detailMotionInterpretation'), statusAccel, statusAccel.includes("⚠️") ? "warning" : "ok");
+        if (statusAccel.includes("⚠️")) {
+            motionIconEl.className = 'fas fa-exclamation-triangle fa-3x my-2 status-warning animate-pulse';
+        } else {
+            motionIconEl.className = 'fas fa-shield-alt fa-3x my-2 status-ok';
+        }
+
+
+        // --- PENYESUAIAN: Kesimpulan Gabungan & Status Global dari JSON baru ---
+        document.getElementById('overallStatusText').textContent = statusKesimpulan.split('—')[0].trim();
+        
+        const combinedAnalysisEl = document.getElementById('combinedAnalysisText');
+        combinedAnalysisEl.textContent = statusKesimpulan;
+        combinedAnalysisEl.className = 'text-lg p-4 rounded-lg leading-relaxed';
+        
+        let overallStatusIconClass = "fas fa-info-circle status-icon-premium status-info"; // Default
+        
+        if (statusKesimpulan.includes("BAHAYA!") || statusKondisiBahaya === true) {
+            combinedAnalysisEl.classList.add('bg-red-50', 'text-red-800', 'dark:bg-red-900/50', 'dark:text-red-300');
+            overallStatusIconClass = "fas fa-biohazard status-icon-premium status-danger animate-ping";
+        } else if (statusKesimpulan.includes("PERINGATAN!") || statusKesimpulan.includes("⚠️")) {
+            combinedAnalysisEl.classList.add('bg-yellow-50', 'text-yellow-800', 'dark:bg-yellow-900/50', 'dark:text-yellow-300');
+            overallStatusIconClass = "fas fa-exclamation-triangle status-icon-premium status-warning";
+        } else if (statusKesimpulan.includes("SEMPURNA!") || statusKesimpulan.includes("✅")) {
+            combinedAnalysisEl.classList.add('bg-green-50', 'text-green-800', 'dark:bg-green-900/50', 'dark:text-green-300');
+            overallStatusIconClass = "fas fa-shield-virus status-icon-premium status-ok";
+        } else { // Kondisi cukup stabil atau info
+            combinedAnalysisEl.classList.add('bg-blue-50', 'text-blue-800', 'dark:bg-blue-900/50', 'dark:text-blue-300');
+            overallStatusIconClass = "fas fa-info-circle status-icon-premium status-info";
+        }
+        document.getElementById('overallStatusIcon').className = overallStatusIconClass;
+
+        previousValues = { temperatureC, humidityRH, airQualityRaw, lightLux, totalAccel };
+    }
+
+    // --- Fungsi Modal Peringatan ---
+    const modal = document.getElementById('alertModal');
+    const modalTitleEl = document.getElementById('modalTitle');
+    const modalMessageEl = document.getElementById('modalMessage');
+    const modalIconEl = document.getElementById('modalIcon');
+
+    function openModal() { if(modal) modal.style.display = "block"; }
+    function closeModal() { if(modal) modal.style.display = "none"; }
+    window.onclick = function(event) { if (event.target == modal) { closeModal(); } }
+
+    async function checkPersistentAlert() {
+        try {
+            const response = await fetch(`${API_BASE_URL}/check-alert`);
+            if (!response.ok) return;
+            const alertData = await response.json();
+            if (alertData.alert_active) {
+                if (modalTitleEl) modalTitleEl.textContent = "🚨 PERINGATAN KONSISTEN!";
+                if (modalMessageEl) modalMessageEl.textContent = alertData.reason;
+                if (modalIconEl) modalIconEl.className = "fas fa-biohazard modal-icon status-danger animate-pulse";
+                if (modal.style.display !== "block") openModal();
+            }
+        } catch (error) {
+            console.error("Error saat memeriksa alert persisten:", error);
+        }
+    }
+
+    // --- Integrasi Gemini AI ---
+    const geminiButton = document.getElementById('getGeminiRecommendation');
+    const geminiButtonText = document.getElementById('geminiButtonText');
+    const geminiButtonIcon = document.getElementById('geminiButtonIcon');
+    const geminiResponseArea = document.getElementById('geminiResponseArea');
+
+    geminiButton.addEventListener('click', async () => {
+        if (Object.keys(currentSensorData).length === 0) {
+            geminiResponseArea.style.display = 'block';
+            geminiResponseArea.textContent = 'Tidak ada data sensor terkini untuk dianalisis.';
+            return;
+        }
+
+        geminiButtonText.textContent = 'Memproses...';
+        geminiButtonIcon.innerHTML = '<span class="loading-spinner"></span>';
+        geminiButton.disabled = true;
+        geminiResponseArea.style.display = 'block';
+        geminiResponseArea.textContent = 'Sedang mengambil rekomendasi cerdas dari EcoBand AI Assistant...';
+
+        // --- PENYESUAIAN: Mengirim payload ke Gemini dengan atribut baru ---
+        const { deviceId, timestamp, temperatureC, humidityRH, airQualityRaw, lightLux, totalAccel, statusKesimpulan, is_bad_state_now, alert_reason } = currentSensorData;
+        const payloadToBackend = {
+            deviceId, timestamp, temperatureC, humidityRH, airQualityRaw, lightLux, totalAccel,
+            statusKesimpulan,
+            is_bad_state_now: is_bad_state_now !== undefined ? is_bad_state_now : currentSensorData.statusKondisiBahaya,
+            alert_reason
+        };
+        
+        try {
+            const response = await fetch(`${API_BASE_URL}/gemini-recommendation`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payloadToBackend)
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(`API Error: ${response.status}. Pesan: ${errorData.error || 'Tidak ada detail.'}`);
+            }
+
+            const result = await response.json();
+            geminiResponseArea.textContent = result.recommendation || 'Gagal mendapat rekomendasi.';
+
+        } catch (error) {
+            console.error('Error fetching Gemini recommendation via backend:', error);
+            geminiResponseArea.textContent = `Maaf, terjadi kesalahan: ${error.message}`;
+        } finally {
+            geminiButtonText.textContent = '✨ Dapatkan Rekomendasi Cerdas';
+            geminiButtonIcon.innerHTML = '<i class="fas fa-wand-magic-sparkles"></i>';
+            geminiButton.disabled = false;
+        }
+    });
+
+    // --- Inisialisasi Saat DOM Selesai Dimuat ---
+    document.addEventListener('DOMContentLoaded', () => {
+        fetchLatestData(); // Ambil data pertama kali
+        checkPersistentAlert();
+        
+        setInterval(fetchLatestData, 5000); // Perbarui data setiap 5 detik
+        setInterval(checkPersistentAlert, 30000); // Periksa status alert setiap 30 detik
+    });
+</script>
+</body>
+</html>
